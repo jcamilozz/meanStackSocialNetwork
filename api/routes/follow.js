@@ -13,7 +13,7 @@ api.get('/follow/home', FollowController.home );
 api.get('/follow/pruebas', md_auth.ensureAuth, FollowController.pruebas );
 api.post('/follow/save', md_auth.ensureAuth, FollowController.setFollowing );
 api.delete('/follow/remove/:id', md_auth.ensureAuth, FollowController.removeFollowing );
-api.get('/follow/listFollows/:id?', md_auth.ensureAuth, FollowController.listFollows );
+api.get('/follow/listFollowings/:id?/:page?', md_auth.ensureAuth, FollowController.listFollowings );
 
 
 module.exports = api;

@@ -28,7 +28,7 @@ function setFollowing( req, res ){
    
     User.findById( followed_user_id, (err, user)=>{
         if(err)
-            return res.status(400).send({ message: 'followed user doesn\'t exist' });
+            return res.status(404).send({ message: 'followed user doesn\'t exist' });
         
         Follow.findOne(query, (err, foundFollowed )=>{
             if(err)
@@ -68,15 +68,66 @@ function removeFollowing( req, res ){
         if( err )
             return res.status(500).send({ message: " An error has happend please try again later ", err});
         if( !followingRemoved )
-            return res.status(400).send({ message: "It was impossible to find this user" });
+            return res.status(404).send({ message: "It was impossible to find this user" });
         
         return res.status(200).send({ message: "Now, you don't follow this user anymore.", followingRemoved });
     });
 }
 
-function listFollows( req, res ){
+/*function listFollows( req, res ){
     var idUser     = req.user.sub;
-    var idFollowed = req.params.followed;
+    var idFollowed = req.params.idfollowed;
+    var query      = {};
+    
+    if( !idFollowed )
+        query = { user: idUser }; 
+        else
+            query = { user: idUser, followed: idFollowed };
+    
+    Follow.find( query, ( err, follows ) =>{
+        if(err)
+            return res.status(500).send({message: "sorry, We couldn't find any result :("});
+        if( !follows )
+            return res.status(404).send({message: "There're not follows registered."});
+        
+        return res.status(200).send( follows );
+    }).sort("-_id");
+}*/
+
+function listFollowings( req, res ){
+
+    var idUser     = req.user.sub;
+    var idFollower = req.params.id;
+    var query      = {};
+    var page       = 1;
+    var itemsPage  = 4;
+    var totalPages = 0;
+    
+    if( !idFollower && !req.params.page ){//there's no params in the url
+        idFollower = idUser;
+    }
+
+    if( idFollower && !req.params.page ){
+        if( !isNaN( idFollower ) ){
+            page       = idFollower;
+            idFollower = idUser;
+        }
+    }
+    
+    if( idFollower && req.params.page ){
+        page = req.params.page;
+    }
+
+    query = { user: idFollower }; 
+
+    Follow.find(query).sort("-_id").populate({ path: "followed"}).paginate( page, itemsPage, (err, followings, total) =>{
+        if( err )
+            return res.status(500).send({err});
+        if( !followings )
+            return res.status(404).send({message: 'There\'s no user available'});
+        totalPages = total/itemsPage;
+        return res.status(200).send({followings, total, totalPages: totalPages });
+    });
 }
 
 module.exports = {
@@ -84,5 +135,5 @@ module.exports = {
     pruebas,
     setFollowing,
     removeFollowing,
-    listFollows
+    listFollowings
 };
