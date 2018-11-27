@@ -167,8 +167,6 @@ function getMyFollows( req, res ){
 }
 
 module.exports = {
-    home,
-    pruebas,
     setFollowing,
     removeFollowing,
     getFollowings,
