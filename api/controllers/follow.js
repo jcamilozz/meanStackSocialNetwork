@@ -74,27 +74,8 @@ function removeFollowing( req, res ){
     });
 }
 
-/*function listFollows( req, res ){
-    var idUser     = req.user.sub;
-    var idFollowed = req.params.idfollowed;
-    var query      = {};
-    
-    if( !idFollowed )
-        query = { user: idUser }; 
-        else
-            query = { user: idUser, followed: idFollowed };
-    
-    Follow.find( query, ( err, follows ) =>{
-        if(err)
-            return res.status(500).send({message: "sorry, We couldn't find any result :("});
-        if( !follows )
-            return res.status(404).send({message: "There're not follows registered."});
-        
-        return res.status(200).send( follows );
-    }).sort("-_id");
-}*/
 
-function listFollowings( req, res ){
+function getFollowings( req, res ){
 
     var idUser     = req.user.sub;
     var idFollower = req.params.id;
@@ -130,10 +111,67 @@ function listFollowings( req, res ){
     });
 }
 
+function getFollowers( req, res ){
+    
+    var userId       = req.user.sub;
+    var userFollowed = req.params.id;
+    var query        = {};
+    var page         = req.params.page;
+    var itemsPage    = 4;
+    var total        = 0;
+    var totalPages   = 0;
+
+    if( !userFollowed && !page ){
+        userFollowed = userId;
+    }
+    
+    if( !page ){
+        if( !isNaN(userFollowed) ){
+            page         = userFollowed;
+            userFollowed = userId;
+        }
+    }
+    query = { followed: userFollowed };
+    Follow.find( query ).sort("-_id").populate({path: "user", select: "nick name email"}).paginate( page, itemsPage, ( err, followers, total )=>{
+        if( err )
+            return res.status(500).send({err});
+        if( !followers )
+            return res.status(404).send({message: 'There\'s no user available'});
+        totalPages = total/itemsPage;
+        return res.status(200).send({followers, total, totalPages: totalPages });
+    });
+}
+//this line is just to try to push it on git
+function getMyFollows( req, res ){
+    var userId    = req.user.sub;
+    var followers = req.params.followers;
+    var query     = {};
+    var queryPath = "";   
+    
+    if( followers == "followers" ){
+        query      = { followed: userId };
+        queryPath  = "user";
+    }else{
+        query = { user: userId };
+        queryPath  = "followed";
+    }
+
+    var find = Follow.find( query ).sort("-_id").populate({path: queryPath, select: "nick name email"});
+    find.exec(( err, follows )=>{
+        if( err )
+            return res.status(500).send({err});
+        if( !follows )
+            return res.status(404).send({message: 'There\'s no user available'});
+        return res.status(200).send({follows});
+    });
+}
+
 module.exports = {
     home,
     pruebas,
     setFollowing,
     removeFollowing,
-    listFollowings
+    getFollowings,
+    getFollowers,
+    getMyFollows
 };

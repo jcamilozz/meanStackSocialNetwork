@@ -113,7 +113,6 @@ function getUser( req, res ){
     });
 }
 
-
 function getUsers( req, res ){
     var identityUserId  = req.user.sub;
     var usuarioOriginal = req.user;
