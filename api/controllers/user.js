@@ -24,6 +24,7 @@ function pruebas(req, res){
 function saveUser( req, res ){
     var user   = new User();
     var params = req.body;
+    console.log( params );
 
     if( params.name && params.surname && params.email && params.password ){
         user.name     = params.name;
@@ -110,11 +111,49 @@ function getUser( req, res ){
             return res.status(404).send({message: "The user doesn\'t exist."});
         }
 
-        Follow.findOne({ user: req.user.sub, followed: userId }, (err, followed )=>{
+        /*Follow.findOne({ user: req.user.sub, followed: userId }, (err, followed )=>{
             if( err ) return res.status(500).send({err});
             return res.status(200).send({user,followed});
+        });*/
+
+        findFollowship( req.user.sub, userId ).then((answer)=>{
+            return res.status(200).send({user, answer});
         });
     });
+}
+
+async function findFollowship( idAuthenticated, userToFind ){
+
+    var following = false;
+    var followed  = false;
+    var query     = {};
+    
+    query         = { user: idAuthenticated, followed: userToFind };
+    var followingQ = await Follow.findOne( query, (err, follow)=>{
+        console.log("en 1");
+        console.log(query);
+        console.log(follow);
+        if(err)
+            return handleError(err);
+        if( follow ){
+            following = true;
+        }
+        
+    });
+
+    query = { user: userToFind, followed: idAuthenticated };
+    var followedQ  = await Follow.findOne( query, (err, follow)=>{
+        console.log("en 2");
+        console.log(query);
+        console.log(follow);
+        if(err)
+            return handleError(err);
+        if( follow ){
+            followed = true;
+        }
+        
+    });
+    return{ "following":following, "followed": followed };
 }
 
 function getUsers( req, res ){
