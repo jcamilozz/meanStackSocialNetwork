@@ -2,6 +2,8 @@
 //required modules.
 var express          = require('express');
 var FollowController = require('../controllers/follow');
+var fs               = require('fs');
+var path             = require('path');
 
 //express router.
 var api    = express.Router();

@@ -19,6 +19,7 @@ api.get( '/user/users/:page?',md_auth.ensureAuth,UserController.getUsers );
 api.put( '/user/update/:id',md_auth.ensureAuth,UserController.updateUser );
 api.post( '/user/uploadImageUser/:id',[md_auth.ensureAuth, md_mp],UserController.uploadImage );
 api.get( '/user/getImage/:nameFile',md_auth.ensureAuth,UserController.getImage );
+api.get( '/user/getCounters/:id?',md_auth.ensureAuth,UserController.getCounters );
 
 
 

@@ -111,11 +111,6 @@ function getUser( req, res ){
             return res.status(404).send({message: "The user doesn\'t exist."});
         }
 
-        /*Follow.findOne({ user: req.user.sub, followed: userId }, (err, followed )=>{
-            if( err ) return res.status(500).send({err});
-            return res.status(200).send({user,followed});
-        });*/
-
         findFollowship( req.user.sub, userId ).then((answer)=>{
             return res.status(200).send({user, answer});
         });
@@ -130,9 +125,6 @@ async function findFollowship( idAuthenticated, userToFind ){
     
     query         = { user: idAuthenticated, followed: userToFind };
     var followingQ = await Follow.findOne( query, (err, follow)=>{
-        console.log("en 1");
-        console.log(query);
-        console.log(follow);
         if(err)
             return handleError(err);
         if( follow ){
@@ -143,9 +135,7 @@ async function findFollowship( idAuthenticated, userToFind ){
 
     query = { user: userToFind, followed: idAuthenticated };
     var followedQ  = await Follow.findOne( query, (err, follow)=>{
-        console.log("en 2");
-        console.log(query);
-        console.log(follow);
+
         if(err)
             return handleError(err);
         if( follow ){
@@ -153,7 +143,7 @@ async function findFollowship( idAuthenticated, userToFind ){
         }
         
     });
-    return{ "following":following, "followed": followed };
+    return{ "following":following, "followedBy": followed };
 }
 
 function getUsers( req, res ){
@@ -226,7 +216,7 @@ function uploadImage( req, res ){
 
             }else{
                 message = 'extention not valid';
-                removeFiles(file_path, res, message );
+                removeFiles( file_path, res, message );
             }
         }
     }else{
@@ -252,6 +242,41 @@ function removeFiles( file_path, res, receivedMessage ){
     });
 }
 
+function getCounters( req, res ){
+    var params         = req.body;
+    var user_id        = req.user.sub;
+    if( req.params.id ){
+        user_id = req.params.id;
+    }
+    
+    getIndividualStadistics( user_id ).then( ( counters )=>{
+        if( counters )
+            return res.status(200).send( counters );
+    });
+}
+
+async function getIndividualStadistics( id_user ){
+
+    var query           = { user: id_user };
+    
+    var followsCount = await Follow.count(query, (err, countValue )=>{
+        if(err)
+            return handleError(err);
+        if(countValue)
+            return( countValue );
+    });
+
+    query = { followed: id_user };
+    var followedByCount = await Follow.count(query, (err, countValue )=>{
+        if(err)
+            return handleError(err);
+        if(countValue)
+            return( countValue );
+    });
+
+    return({followings: followsCount, followedBy: followedByCount });
+}
+
 module.exports = {
   home,
   pruebas,
@@ -261,5 +286,6 @@ module.exports = {
   getUsers,
   updateUser,
   uploadImage,
-  getImage
+  getImage,
+  getCounters
 };
